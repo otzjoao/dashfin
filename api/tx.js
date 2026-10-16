@@ -43,6 +43,8 @@ module.exports = async (req, res) => {
           day: Math.min(31, Math.max(0, parseInt(x.day) || 0)),
           kw: String(x.kw || "").slice(0, 40),
           m: /^\d{4}-\d{2}$/.test(x.m) ? x.m : "",
+          pt: (parseInt(x.pt) || 0) > 1 ? Math.min(60, parseInt(x.pt)) : 0,
+          pc: (parseInt(x.pt) || 0) > 1 ? Math.max(1, parseInt(x.pc) || 1) : 0,
         }));
       } else {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(x.d)) continue;

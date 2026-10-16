@@ -62,6 +62,7 @@ svg{width:100%;height:auto;display:block}
 .lk{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb,var(--bg) 60%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
 .lk .c{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
 .lk h2{margin:0}.lk .err{color:var(--rd);min-height:1.4em;margin:0}
+.fl{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;color:var(--mu)}.fl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 </style></head><body><div class="w" id="w" inert>
 <header class="hd"><div><h1>Finanças</h1><p class="sub">Suas finanças organizadas em 2 segundos.</p></div><div style="display:flex;gap:12px;align-items:center"><div class="th" id="th"></div><button type="button" id="lb" class="x" title="Bloquear" aria-label="Bloquear">🔒</button></div></header>
 <nav class="tabs"><button type="button" data-v="dash" class="on">Dashboard</button><button type="button" data-v="lanc">Lançamentos</button></nav>
@@ -77,6 +78,8 @@ svg{width:100%;height:auto;display:block}
 <div class="c"><h2>Histórico de saldo</h2><svg id="ch" viewBox="0 0 600 190"></svg></div>
 <div class="c"><h2>Para onde foi o dinheiro</h2><svg id="dn" viewBox="0 0 100 100" style="max-width:160px;margin:0 auto 8px"></svg><div id="lg"></div></div>
 </div>
+<div class="c"><h2>Previsão dos próximos meses</h2><svg id="fc" viewBox="0 0 600 190"></svg>
+<div class="fl"><span><i style="background:var(--ac)"></i>Parcelas</span><span><i style="background:var(--mu);opacity:.55"></i>Fixos e demais</span><span><i style="background:var(--yl)"></i>Entradas previstas</span></div><div id="fi" style="margin-top:8px"></div></div>
 <div class="row e">
 <div class="c"><h2>Previstos × Realizado</h2><div class="mini" id="pm"></div><div id="pl"></div></div>
 <div class="c"><h2>Transações recentes</h2><div id="tr"></div></div>
@@ -98,6 +101,8 @@ svg{width:100%;height:auto;display:block}
 <input id="pa" type="number" step="0.01" min="0.01" placeholder="Valor" required>
 <select id="pt"><option value="s">Saída</option><option value="e">Entrada</option></select>
 <input id="pd" type="number" min="1" max="31" placeholder="Dia do mês"><select id="pc"></select>
+<input id="pcur" type="number" min="1" placeholder="Parcela atual (ex.: 3)"><input id="ptot" type="number" min="2" placeholder="Total de parcelas (ex.: 7)">
+<p class="sub d" style="margin:0">Com parcelas, o previsto vale a partir do mês selecionado lá em cima e termina sozinho na última parcela.</p>
 <input class="d" id="pk" placeholder="Palavra no extrato (opcional)">
 <label class="d ck"><input type="checkbox" id="pfx" checked> Fixo todo mês</label>
 <button class="d">Adicionar previsto</button></form>
@@ -152,7 +157,7 @@ $("lg").innerHTML=ks.map(k=>`<div class="lg"><i style="background:${COL[CATS.ind
 const SR=P.slice().sort((a,b)=>b.d.localeCompare(a.d)||b.i-a.i),fd=x=>x.d.split("-").reverse().join("/"),vl=x=>`<b class="${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b>`,NO='<span class="sub">Nenhuma transação.</span>';
 $("tl").innerHTML=SR.slice(0,200).map(x=>`<div class="tx"><div>${esc(x.s)}<small><select class="cs" data-c="${x.i}">${CATS.map(c=>`<option${c===x.c?" selected":""}>${c}</option>`).join("")}</select> · ${esc(x.b||"Outro")} · ${fd(x)}</small></div>${vl(x)}<button class="x" data-i="${x.i}" title="Remover">✕</button></div>`).join("")||NO;
 $("tr").innerHTML=SR.slice(0,6).map(x=>`<div class="tx"><div>${esc(x.s)}<small>${esc(x.c)} · ${esc(x.b||"Outro")} · ${fd(x)}</small></div>${vl(x)}</div>`).join("")||NO;
-renderPlan();}
+renderPlan();renderFc();}
 $("tl").onclick=async e=>{const i=e.target.dataset.i;if(i&&confirm("Remover?")){await api("DELETE",{i:Number(i)});load()}};
 $("m").onchange=render;$("bf").onchange=render;
 $("tl").onchange=async e=>{const i=e.target.dataset.c;if(!i)return;const x=T.find(y=>y.i==i);if(x){x.c=e.target.value;await api("POST",x);load()}};
@@ -196,11 +201,29 @@ const seen={};r=r.map(x=>{const k=[bank,x.d,x.s,x.a,x.t].join("|");seen[k]=(seen
 if(confirm(r.length+" transações encontradas ("+bank+"). Importar?")){await api("POST",{items:r});$("m").value=r.map(x=>x.d).sort().pop().slice(0,7);load()}
 e.target.value=""};
 /*PL*/
+const mi=s=>{const[y,m]=s.split("-").map(Number);return y*12+m};
+function act(p,mo){if(p.pt>1&&p.m){const n=(p.pc||1)+mi(mo)-mi(p.m);return n>=1&&n<=p.pt?n:0}return !p.m||p.m===mo?1:0}
+const MN=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const ml=q=>{const[y,m]=q.split("-");return MN[m-1]+"/"+y.slice(2)};
+function renderFc(){
+const q0=$("m").value||"2026-10";let[y,mo]=q0.split("-").map(Number);const D=[];
+for(let k=0;k<6;k++){const q=y+"-"+String(mo).padStart(2,"0");let pa=0,ot=0,en=0;
+PL.forEach(p=>{if(!act(p,q))return;if(p.t==="e")en+=p.a;else if(p.pt>1&&p.m)pa+=p.a;else ot+=p.a});
+D.push({q,pa,ot,en});if(++mo>12){mo=1;y++}}
+const mx=Math.max(...D.map(d=>Math.max(d.pa+d.ot,d.en)),1),W=560/6,H=130,B=165,Y=v=>v/mx*H,F=v=>"R$ "+Math.round(v).toLocaleString("pt-BR");
+let h="";
+D.forEach((d,k)=>{const x=20+k*W+(W-54)/2,hy=Y(d.ot),hp=Y(d.pa);
+h+=`<rect x="${x}" y="${B-hy}" width="54" height="${hy}" rx="3" fill="var(--mu)" opacity=".55"/><rect x="${x}" y="${B-hy-hp}" width="54" height="${hp}" rx="3" fill="var(--ac)"/>`;
+if(d.en>0)h+=`<line x1="${x-5}" x2="${x+59}" y1="${B-Y(d.en)}" y2="${B-Y(d.en)}" stroke="var(--yl)" stroke-width="2" stroke-dasharray="4 3"/>`;
+h+=`<text x="${x+27}" y="${B-hy-hp-6}" text-anchor="middle" font-size="10" fill="var(--tx)">${F(d.pa+d.ot)}</text><text x="${x+27}" y="184" text-anchor="middle" font-size="11" fill="var(--mu)">${ml(d.q)}</text>`});
+$("fc").innerHTML=h;
+$("fi").innerHTML=PL.filter(p=>p.pt>1&&p.m).map(p=>{const last=mi(p.m)+(p.pt-(p.pc||1)),n=act(p,q0);
+return `<div class="lg"><i style="background:var(--ac)"></i>${esc(p.s)}${n?" · parcela "+n+"/"+p.pt:""}<b>termina em ${ml(Math.floor((last-1)/12)+"-"+String((last-1)%12+1).padStart(2,"0"))}</b></div>`}).join("")}
 const nz=s=>String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 function renderPlan(){
 const m=$("m").value,mt=T.filter(x=>x.d.startsWith(m)),used=new Set();
 const td=new Date(),cm=td.getFullYear()+"-"+String(td.getMonth()+1).padStart(2,"0"),dn=td.getDate();
-const L=PL.filter(p=>!p.m||p.m===m).sort((a,b)=>(a.day||99)-(b.day||99));
+const L=PL.filter(p=>act(p,m)).sort((a,b)=>(a.day||99)-(b.day||99));
 let ps=0,rs=0,h="";
 L.forEach(p=>{const kw=nz(p.kw||p.s);
 const mm=mt.filter(x=>x.t===p.t&&!used.has(x.i)&&nz(x.s).includes(kw));
@@ -210,14 +233,18 @@ if(!found){const late=m<cm||(m===cm&&p.day&&p.day<dn);st=late?"Não encontrado":
 else if(p.t==="s"&&real>p.a*1.005){st="Acima +"+R(real-p.a);cl="neg"}
 else{st=p.t==="e"?"Recebido":"Pago";cl="pos"}
 if(p.t==="s"){ps+=p.a;rs+=real}
-h+=`<div class="tx"><div>${esc(p.s)}<small>${p.m?"":"Fixo · "}${p.day?"dia "+p.day+" · ":""}${esc(p.c)} · ${p.t==="e"?"previsto":"previsto"} ${R(p.a)}</small></div><div style="flex:none;text-align:right"><b class="${cl}">${found?R(real):"—"}</b><small>${st}</small></div><button class="x" data-p="${p.i}" title="Remover">✕</button></div>`});
+h+=`<div class="tx"><div>${esc(p.s)}<small>${p.pt>1?"Parcela "+act(p,m)+"/"+p.pt+" · ":p.m?"":"Fixo · "}${p.day?"dia "+p.day+" · ":""}${esc(p.c)} · ${p.t==="e"?"previsto":"previsto"} ${R(p.a)}</small></div><div style="flex:none;text-align:right"><b class="${cl}">${found?R(real):"—"}</b><small>${st}</small></div>${p.pt>1?"":`<button class="x" data-f="${p.i}" title="${p.m?"Repetir todo mês":"Valer só neste mês"}">↻</button>`}<button class="x" data-p="${p.i}" title="Remover">✕</button></div>`});
 const fora=mt.filter(x=>x.t==="s"&&!used.has(x.i)).reduce((s,x)=>s+x.a,0);
 $("pm").innerHTML=`<div><span class="l">Previsto (saídas)</span><b>${R(ps)}</b></div><div><span class="l">Realizado</span><b>${R(rs)}</b></div><div><span class="l">Fora do previsto</span><b class="${fora>0?"neg":""}">${R(fora)}</b></div>`;
 const hh=h||'<span class="sub">Nenhum previsto neste mês.</span>';$("pl").innerHTML=hh;$("pl2").innerHTML=hh}
 /*PE*/
-$("pl2").onclick=async e=>{const i=e.target.dataset.p;if(i&&confirm("Remover previsto?")){await api("DELETE",{i:Number(i)},"plan");load()}};
+$("pl2").onclick=async e=>{const f=e.target.dataset.f,i=e.target.dataset.p;
+if(f){const p=PL.find(x=>x.i==f);if(p){await api("POST",{...p,m:p.m?"":$("m").value},"plan");load()}return}
+if(i&&confirm("Remover previsto?")){await api("DELETE",{i:Number(i)},"plan");load()}};
 $("pf").onsubmit=async e=>{e.preventDefault();
-await api("POST",{i:Date.now(),s:$("pn").value.trim(),c:$("pc").value,t:$("pt").value,a:parseFloat($("pa").value),day:parseInt($("pd").value)||0,kw:$("pk").value.trim(),m:$("pfx").checked?"":$("m").value},"plan");
+const pt2=parseInt($("ptot").value)||0,pc2=parseInt($("pcur").value)||1;
+if(pt2&&(pt2<2||pc2>pt2)){alert("A parcela atual não pode ser maior que o total.");return}
+await api("POST",{i:Date.now(),s:$("pn").value.trim(),c:$("pc").value,t:$("pt").value,a:parseFloat($("pa").value),day:parseInt($("pd").value)||0,kw:$("pk").value.trim(),pc:pt2?pc2:0,pt:pt2,m:($("pfx").checked&&!pt2)?"":$("m").value},"plan");
 e.target.reset();$("pfx").checked=true;load()};
 /*UI*/
 const TH=[["verde","#4ade80"],["azul","#60a5fa"],["roxo","#a78bfa"],["laranja","#fb923c"],["rosa","#f472b6"],["claro","linear-gradient(135deg,#fff 50%,#16a34a 50%)"]];

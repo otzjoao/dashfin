@@ -54,8 +54,15 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 .tx>div{flex:1;min-width:0;overflow-wrap:anywhere}
 .tx small{color:var(--mu);display:block}
 .x{background:none;color:var(--mu);padding:2px 8px;min-height:0}
-.cs{background:none;border:0;padding:0;min-height:0;color:var(--mu);font-size:inherit;max-width:130px}
-#tl{max-height:520px;overflow:auto}
+.hh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.hh h2{margin:0}.hh input{width:180px;min-height:34px;padding:6px 10px}
+.tt{display:grid;grid-template-columns:46px minmax(0,2fr) minmax(0,1.1fr) 72px 110px 28px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.tt.h{padding-top:0}
+.tt .mu,.tt .bk{color:var(--mu);font-size:12px}
+.tt .dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.cs{appearance:none;-webkit-appearance:none;background:var(--bg);border:1px solid var(--bd);border-radius:999px;padding:3px 10px;min-height:0;color:var(--mu);font-size:12px;max-width:100%;cursor:pointer;text-overflow:ellipsis}
+.cs:hover{border-color:var(--ac);color:var(--tx)}
+.more{width:100%;margin-top:10px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
 #pl .x{display:none}
 .pr{display:grid;grid-template-columns:minmax(0,2.2fr) 1fr 1fr 1.3fr;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)}
 .pr:last-child{border:0}
@@ -78,7 +85,9 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 .lk .c{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
 .lk h2{margin:0;font-size:17px}.lk .err{color:var(--rd);min-height:1.4em;margin:0}
 @media(max-width:1000px){.g{grid-template-columns:1fr 1fr}.row,.row.e{grid-template-columns:1fr}}
-@media(max-width:760px){.v{font-size:20px}.mini{grid-template-columns:1fr}.tabs{width:100%}.tabs button{flex:1;justify-content:center}.hr{margin-left:0;width:100%}.hr>*{flex:1 1 120px}.hr .menu .gh{width:100%;justify-content:center}.pr{grid-template-columns:minmax(0,1.5fr) 1fr 1fr}.pr .ps{grid-column:1/-1;margin-top:-4px}.pr.h .ps{display:none}}
+@media(max-width:760px){.v{font-size:20px}.mini{grid-template-columns:1fr}.tabs{width:100%}.tabs button{flex:1;justify-content:center}.hr{margin-left:0;width:100%}.hr>*{flex:1 1 120px}.hr .menu .gh{width:100%;justify-content:center}.pr{grid-template-columns:minmax(0,1.5fr) 1fr 1fr}.pr .ps{grid-column:1/-1;margin-top:-4px}.pr.h .ps{display:none}
+.hh input{width:130px}.tt.h{display:none}.tt{grid-template-columns:40px minmax(0,1fr) auto 24px;grid-template-areas:"d n v x" ". c b b"}
+.tt .mu{grid-area:d}.tt .dn{grid-area:n}.tt .pv{grid-area:v}.tt .x{grid-area:x}.tt .cs{grid-area:c;justify-self:start}.tt .bk{grid-area:b}}
 </style></head><body><div class="w" id="w" inert>
 <header class="hd">
 <div><h1>Finanças</h1><p class="sub">Suas finanças organizadas em 2 segundos.</p></div>
@@ -128,7 +137,7 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 <label class="d ck"><input type="checkbox" id="pfx" checked> Fixo todo mês</label>
 <button class="d">Adicionar previsto</button></form>
 <div id="pl2" style="margin-top:12px"></div></div>
-<div class="c"><h2>Transações do mês</h2><div id="tl"></div></div>
+<div class="c"><div class="hh"><h2>Transações do mês <span class="sub" id="tc"></span></h2><input id="q" type="search" placeholder="Buscar…" aria-label="Buscar transação"></div><div id="tl"></div></div>
 </div>
 </main>
 </div>
@@ -138,11 +147,30 @@ const CATS=["Mercado","Alimentação","Transporte","Moradia","Lazer","Saúde","E
 const COL=["#4ade80","#facc15","#60a5fa","#f472b6","#fb923c","#a78bfa","#2dd4bf","#f87171","#84cc16","#94a3b8"];
 const $=id=>document.getElementById(id);
 const R=n=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-let T=[],PL=[],P="";try{P=localStorage.getItem("dp")||sessionStorage.getItem("dp")||""}catch(e){}
+const DECOY_MODE="random"; // "random" = valores genéricos aleatórios | "empty" = tudo zerado
+let T=[],PL=[],P="",SHOW=false,DEMO=false,DB={tx:[],plan:[]};try{P=localStorage.getItem("dp")||sessionStorage.getItem("dp")||""}catch(e){}
 const clr=()=>{try{localStorage.removeItem("dp");sessionStorage.removeItem("dp")}catch(e){}};
-function lock(m){P="";clr();T=[];PL=[];render();$("w").inert=true;$("lk").hidden=false;$("le").textContent=m||"";$("lp").value="";setTimeout(()=>$("lp").focus(),50)}
+function lock(m){DEMO=false;P="";clr();T=[];PL=[];render();$("w").inert=true;$("lk").hidden=false;$("le").textContent=m||"";$("lp").value="";setTimeout(()=>$("lp").focus(),50)}
 function unlock(){$("lk").hidden=true;$("w").inert=false}
+function decoy(){
+const rnd=(a,b)=>Math.round((a+Math.random()*(b-a))*100)/100,pk=a=>a[Math.floor(Math.random()*a.length)],BKS=["C6","Itaú","PicPay"],tx=[],plan=[];let id=1;
+if(DECOY_MODE!=="empty"){const n=new Date();
+for(let k=0;k<3;k++){const dt=new Date(n.getFullYear(),n.getMonth()-k,1),ym=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0"),mx=k?28:Math.max(1,Math.min(28,n.getDate()));
+const add=(d,s,c,t,a)=>tx.push({i:id++,d:ym+"-"+String(Math.min(d,mx)).padStart(2,"0"),s,c,t,a,b:pk(BKS)});
+add(5,"Salário","Salário","e",rnd(2600,3600));if(Math.random()<.5)add(18,"Freelance","Outros","e",rnd(150,600));
+add(7,"Aluguel","Moradia","s",rnd(900,1300));add(10,"Internet","Moradia","s",rnd(80,130));
+for(let j=0;j<3;j++)add(2+j*9,"Supermercado","Mercado","s",rnd(120,420));
+for(let j=0;j<4;j++)add(3+j*7,"Ônibus","Transporte","s",rnd(18,90));
+add(12,"Cinema","Lazer","s",rnd(30,90));add(20,"Farmácia","Saúde","s",rnd(25,140));add(15,"Lanche","Alimentação","s",rnd(20,70));add(22,"Compra avulsa","Compras Avulsas","s",rnd(30,200))}
+const m0=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+plan.push({i:1,s:"Salário",c:"Salário",t:"e",a:3000,day:5,kw:"",m:""},{i:2,s:"Aluguel",c:"Moradia",t:"s",a:1100,day:7,kw:"",m:""},{i:3,s:"Internet",c:"Moradia",t:"s",a:100,day:10,kw:"",m:""},{i:4,s:"Supermercado",c:"Mercado",t:"s",a:600,day:0,kw:"",m:""},{i:5,s:"Celular",c:"Outros",t:"s",a:rnd(150,350),day:0,kw:"",m:m0,pc:3,pt:10},{i:6,s:"Notebook",c:"Estudos",t:"s",a:rnd(120,260),day:0,kw:"",m:m0,pc:7,pt:12})}
+return{tx,plan}}
+function demoApi(method,body,k){const key=k==="plan"?"plan":"tx";
+if(method==="POST"){for(const x of body.items||[body]){const j=DB[key].findIndex(y=>y.i===x.i);if(j<0)DB[key].push(x);else DB[key][j]=x}}
+if(method==="DELETE"){const st=new Set((body.ids||[body.i]).map(Number));DB[key]=DB[key].filter(x=>!st.has(x.i))}
+return JSON.parse(JSON.stringify(DB[key]))}
 async function api(method,body,k){
+if(DEMO)return demoApi(method,body,k);
 if(!P){lock();throw 0}
 const r=await fetch("/api/tx"+(k?"?k="+k:""),{method,headers:{"x-pass":P,"content-type":"application/json"},body:body&&JSON.stringify(body)});
 if(r.status===401){lock("Senha incorreta ou expirada. Digite novamente.");throw 0}
@@ -177,11 +205,13 @@ $("dn").innerHTML=h+`<text x="50" y="48" text-anchor="middle" font-size="7" fill
 $("lg").innerHTML=ks.map(k=>`<div class="lg"><i style="background:${COL[CATS.indexOf(k)]||COL[9]}"></i>${k}<b>${R(by[k])}</b></div>`).join("")||'<span class="sub">Sem saídas no período.</span>';
 // lista
 const SR=P.slice().sort((a,b)=>b.d.localeCompare(a.d)||b.i-a.i),fd=x=>x.d.split("-").reverse().join("/"),vl=x=>`<b class="${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b>`,NO='<span class="sub">Nenhuma transação.</span>';
-$("tl").innerHTML=SR.slice(0,200).map(x=>`<div class="tx"><div>${esc(x.s)}<small><select class="cs" data-c="${x.i}">${CATS.map(c=>`<option${c===x.c?" selected":""}>${c}</option>`).join("")}</select> · ${esc(x.b||"Outro")} · ${fd(x)}</small></div>${vl(x)}<button class="x" data-i="${x.i}" title="Remover">✕</button></div>`).join("")||NO;
+const qs=nz($("q").value||""),SL=qs?SR.filter(x=>nz(x.s).includes(qs)):SR,lim=SHOW?SL.length:30;
+$("tl").innerHTML=SL.length?'<div class="tt h"><span class="l">Data</span><span class="l">Descrição</span><span class="l">Categoria</span><span class="l">Banco</span><span class="l pv">Valor</span><span></span></div>'+SL.slice(0,lim).map(x=>`<div class="tt"><span class="mu">${fd(x).slice(0,5)}</span><span class="dn" title="${esc(x.s)}">${esc(x.s)}</span><select class="cs" data-c="${x.i}" aria-label="Categoria">${CATS.map(c=>`<option${c===x.c?" selected":""}>${c}</option>`).join("")}</select><span class="bk">${esc(x.b||"Outro")}</span><b class="pv ${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b><button class="x" data-i="${x.i}" title="Remover" aria-label="Remover">✕</button></div>`).join("")+(SL.length>lim?`<button type="button" class="more" id="more">Ver todas (${SL.length})</button>`:""):NO;
+$("tc").textContent="· "+SL.length+(SL.length===1?" transação":" transações");
 $("tr").innerHTML=SR.slice(0,6).map(x=>`<div class="tx"><div>${esc(x.s)}<small>${esc(x.c)} · ${esc(x.b||"Outro")} · ${fd(x)}</small></div>${vl(x)}</div>`).join("")||NO;
 renderPlan();renderFc();}
-$("tl").onclick=async e=>{const i=e.target.dataset.i;if(i&&confirm("Remover?")){await api("DELETE",{i:Number(i)});load()}};
-$("m").onchange=render;$("bf").onchange=render;
+$("tl").onclick=async e=>{if(e.target.id==="more"){SHOW=true;render();return}const i=e.target.dataset.i;if(i&&confirm("Remover?")){await api("DELETE",{i:Number(i)});load()}};
+$("m").onchange=render;$("bf").onchange=render;$("q").oninput=render;
 $("tl").onchange=async e=>{const i=e.target.dataset.c;if(!i)return;const x=T.find(y=>y.i==i);if(x){x.c=e.target.value;await api("POST",x);load()}};
 $("ty").onchange=()=>{$("ct").value=$("ty").value==="e"?"Salário":"Mercado"};
 $("f").onsubmit=async e=>{e.preventDefault();
@@ -284,7 +314,7 @@ document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("[data-v]")
 view(location.hash==="#lanc"?"lanc":"dash");
 $("lf").onsubmit=async e=>{e.preventDefault();const pw=$("lp").value;if(!pw)return;$("le").textContent="";
 try{const r=await fetch("/api/tx",{headers:{"x-pass":pw}});
-if(r.status===401){$("le").textContent="Senha incorreta";$("lp").value="";$("lp").focus();return}
+if(r.status===401){DEMO=true;DB=decoy();P="";$("lp").value="";await load();return}
 if(!r.ok){$("le").textContent="Erro no servidor ("+r.status+")";return}
 P=pw;try{($("lr").checked?localStorage:sessionStorage).setItem("dp",pw)}catch(_){}
 await load()}catch(_){$("le").textContent="Sem conexão"}};

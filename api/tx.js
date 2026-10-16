@@ -54,7 +54,9 @@ module.exports = async (req, res) => {
     return res.json({ ok: true, n: args.length / 2 });
   }
   if (req.method === "DELETE") {
-    await redis(["HDEL", KEY, String(b.i)]);
+    const ids = (Array.isArray(b.ids) ? b.ids : [b.i]).slice(0, 500).map(String);
+    if (!ids.length) return res.status(400).json({ error: "invalid" });
+    await redis(["HDEL", KEY, ...ids]);
     return res.json({ ok: true });
   }
   res.status(405).end();

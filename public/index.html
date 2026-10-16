@@ -10,6 +10,7 @@
 :root[data-theme=roxo]{--bg:#120e1c;--card:#1a1527;--bd:#2c2442;--mu:#9a90b5;--ac:#a78bfa;--on:#150b2e}
 :root[data-theme=laranja]{--bg:#14100c;--card:#1d1712;--bd:#33281e;--mu:#a89a8a;--ac:#fb923c;--on:#2a1200}
 :root[data-theme=rosa]{--bg:#180d13;--card:#21121b;--bd:#3a2030;--mu:#b590a5;--ac:#f472b6;--on:#30081c}
+:root[data-theme=multi360]{--bg:#15181e;--card:#1e222a;--bd:#2f3440;--tx:#e6ecf7;--mu:#9aa4b5;--ac:#0d5afa;--pt:#5b92ff;--on:#fff}
 :root[data-theme=claro]{--bg:#f3f6f4;--card:#fff;--bd:#dbe3de;--tx:#14201a;--mu:#5d6d63;--ac:#16a34a;--on:#fff;--rd:#dc2626;--yl:#ca8a04;color-scheme:light}
 *{box-sizing:border-box}
 html{background:var(--bg)}
@@ -51,7 +52,7 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 .c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;min-width:0}
 .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);font-weight:600}
 .v{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:6px;overflow-wrap:anywhere}
-.pos{color:var(--ac)}.neg{color:var(--rd)}.yl{color:var(--yl)}
+.pos{color:var(--pt,var(--ac))}.neg{color:var(--rd)}.yl{color:var(--yl)}
 .cv{width:100%;height:auto;display:block}
 .lg{display:flex;align-items:center;gap:8px;margin:5px 0}
 .lg i{width:10px;height:10px;border-radius:50%;flex:none}
@@ -316,7 +317,7 @@ if(pt2&&(pt2<2||pc2>pt2)){alert("A parcela atual não pode ser maior que o total
 await api("POST",{i:Date.now(),s:$("pn").value.trim(),c:$("pc").value,t:$("pt").value,a:parseFloat($("pa").value),day:parseInt($("pd").value)||0,kw:$("pk").value.trim(),pc:pt2?pc2:0,pt:pt2,m:($("pfx").checked&&!pt2)?"":$("m").value},"plan");
 e.target.reset();$("pfx").checked=true;load()};
 /*UI*/
-const TH=[["verde","#4ade80"],["azul","#60a5fa"],["roxo","#a78bfa"],["laranja","#fb923c"],["rosa","#f472b6"],["claro","linear-gradient(135deg,#fff 50%,#16a34a 50%)"]];
+const TH=[["verde","#4ade80"],["azul","#60a5fa"],["roxo","#a78bfa"],["laranja","#fb923c"],["rosa","#f472b6"],["multi360","linear-gradient(135deg,#0d5afa 50%,#15181e 50%)"],["claro","linear-gradient(135deg,#fff 50%,#16a34a 50%)"]];
 $("th").innerHTML=TH.map(([t,c])=>`<button type="button" data-t="${t}"><i style="background:${c}"></i>${t[0].toUpperCase()+t.slice(1)}</button>`).join("");
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem("th",t)}catch(e){}$("th").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.t===t))}
 $("th").onclick=e=>{const b=e.target.closest("[data-t]");if(b)setTheme(b.dataset.t)};

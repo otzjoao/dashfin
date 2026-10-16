@@ -22,6 +22,13 @@ h2{font-size:14px;font-weight:700;letter-spacing:-.01em;margin:0 0 12px}
 .ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 input,select,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 11px;min-height:38px}
 option{background:var(--card);color:var(--tx)}
+input[type=date],input[type=month]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;height:38px;line-height:1.2;text-align:left;overflow:hidden}
+input::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.hr input[type=month]{height:36px}
+html{overflow-x:hidden}
+@media(pointer:coarse){input,select,textarea,.ed{font-size:16px}}
+.ed{width:100%;min-height:34px;padding:5px 8px;font-size:inherit}
+.ac{display:flex;justify-content:flex-end;gap:2px}
 button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:700}
 :is(input,select,button):focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
@@ -56,7 +63,7 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 .x{background:none;color:var(--mu);padding:2px 8px;min-height:0}
 .hh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
 .hh h2{margin:0}.hh input{width:180px;min-height:34px;padding:6px 10px}
-.tt{display:grid;grid-template-columns:46px minmax(0,2fr) minmax(0,1.1fr) 72px 110px 28px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.tt{display:grid;grid-template-columns:46px minmax(0,2fr) minmax(0,1.1fr) 72px 110px 60px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
 .tt.h{padding-top:0}
 .tt .mu,.tt .bk{color:var(--mu);font-size:12px}
 .tt .dn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -86,8 +93,8 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 .lk h2{margin:0;font-size:17px}.lk .err{color:var(--rd);min-height:1.4em;margin:0}
 @media(max-width:1000px){.g{grid-template-columns:1fr 1fr}.row,.row.e{grid-template-columns:1fr}}
 @media(max-width:760px){.v{font-size:20px}.mini{grid-template-columns:1fr}.tabs{width:100%}.tabs button{flex:1;justify-content:center}.hr{margin-left:0;width:100%}.hr>*{flex:1 1 120px}.hr .menu .gh{width:100%;justify-content:center}.pr{grid-template-columns:minmax(0,1.5fr) 1fr 1fr}.pr .ps{grid-column:1/-1;margin-top:-4px}.pr.h .ps{display:none}
-.hh input{width:130px}.tt.h{display:none}.tt{grid-template-columns:40px minmax(0,1fr) auto 24px;grid-template-areas:"d n v x" ". c b b"}
-.tt .mu{grid-area:d}.tt .dn{grid-area:n}.tt .pv{grid-area:v}.tt .x{grid-area:x}.tt .cs{grid-area:c;justify-self:start}.tt .bk{grid-area:b}}
+.hh input{width:130px}.tt.h{display:none}.tt{grid-template-columns:40px minmax(0,1fr) auto 56px;grid-template-areas:"d n v x" ". c b b"}
+.tt .mu{grid-area:d}.tt .dn{grid-area:n}.tt .pv{grid-area:v}.tt .ac{grid-area:x}.tt .cs{grid-area:c;justify-self:start}.tt .bk{grid-area:b}}
 </style></head><body><div class="w" id="w" inert>
 <header class="hd">
 <div><h1>Finanças</h1><p class="sub">Suas finanças organizadas em 2 segundos.</p></div>
@@ -117,7 +124,7 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 <main id="lanc" class="view" hidden>
 <div class="row e">
 <div class="c"><h2>Nova transação</h2>
-<form id="f" class="fm"><input class="d" id="ds" placeholder="Descrição" required>
+<form id="f" class="fm"><select class="d" id="pp" aria-label="Previsto"><option value="">Escolher um previsto (opcional)</option></select><input class="d" id="ds" placeholder="Descrição" list="dl" autocomplete="off" required><datalist id="dl"></datalist>
 <input id="am" type="number" step="0.01" min="0.01" placeholder="Valor" required>
 <select id="ty"><option value="s">Saída</option><option value="e">Entrada</option></select>
 <select id="ct"></select><input id="dt" type="date" required>
@@ -206,17 +213,19 @@ $("lg").innerHTML=ks.map(k=>`<div class="lg"><i style="background:${COL[CATS.ind
 // lista
 const SR=P.slice().sort((a,b)=>b.d.localeCompare(a.d)||b.i-a.i),fd=x=>x.d.split("-").reverse().join("/"),vl=x=>`<b class="${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b>`,NO='<span class="sub">Nenhuma transação.</span>';
 const qs=nz($("q").value||""),SL=qs?SR.filter(x=>nz(x.s).includes(qs)):SR,lim=SHOW?SL.length:30;
-$("tl").innerHTML=SL.length?'<div class="tt h"><span class="l">Data</span><span class="l">Descrição</span><span class="l">Categoria</span><span class="l">Banco</span><span class="l pv">Valor</span><span></span></div>'+SL.slice(0,lim).map(x=>`<div class="tt"><span class="mu">${fd(x).slice(0,5)}</span><span class="dn" title="${esc(x.s)}">${esc(x.s)}</span><select class="cs" data-c="${x.i}" aria-label="Categoria">${CATS.map(c=>`<option${c===x.c?" selected":""}>${c}</option>`).join("")}</select><span class="bk">${esc(x.b||"Outro")}</span><b class="pv ${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b><button class="x" data-i="${x.i}" title="Remover" aria-label="Remover">✕</button></div>`).join("")+(SL.length>lim?`<button type="button" class="more" id="more">Ver todas (${SL.length})</button>`:""):NO;
+$("tl").innerHTML=SL.length?'<div class="tt h"><span class="l">Data</span><span class="l">Descrição</span><span class="l">Categoria</span><span class="l">Banco</span><span class="l pv">Valor</span><span></span></div>'+SL.slice(0,lim).map(x=>`<div class="tt"><span class="mu">${fd(x).slice(0,5)}</span><span class="dn" title="${esc(x.s)}">${esc(x.s)}</span><select class="cs" data-c="${x.i}" aria-label="Categoria">${CATS.map(c=>`<option${c===x.c?" selected":""}>${c}</option>`).join("")}</select><span class="bk">${esc(x.b||"Outro")}</span><b class="pv ${x.t==="e"?"pos":"neg"}">${x.t==="e"?"+":"−"}${R(x.a)}</b><span class="ac"><button class="x" data-e="${x.i}" title="Renomear" aria-label="Renomear"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button><button class="x" data-i="${x.i}" title="Remover" aria-label="Remover">✕</button></span></div>`).join("")+(SL.length>lim?`<button type="button" class="more" id="more">Ver todas (${SL.length})</button>`:""):NO;
 $("tc").textContent="· "+SL.length+(SL.length===1?" transação":" transações");
 $("tr").innerHTML=SR.slice(0,6).map(x=>`<div class="tx"><div>${esc(x.s)}<small>${esc(x.c)} · ${esc(x.b||"Outro")} · ${fd(x)}</small></div>${vl(x)}</div>`).join("")||NO;
 renderPlan();renderFc();}
-$("tl").onclick=async e=>{if(e.target.id==="more"){SHOW=true;render();return}const i=e.target.dataset.i;if(i&&confirm("Remover?")){await api("DELETE",{i:Number(i)});load()}};
-$("m").onchange=render;$("bf").onchange=render;$("q").oninput=render;
+$("tl").onclick=async e=>{if(e.target.id==="more"){SHOW=true;render();return}
+const ed=e.target.closest("[data-e]");if(ed){const id=ed.dataset.e;editName(ed.closest(".tt").querySelector(".dn"),80,async v=>{const x=T.find(y=>y.i==id);if(x){await api("POST",{...x,s:v});load()}else render()});return}const i=e.target.dataset.i;if(i&&confirm("Remover?")){await api("DELETE",{i:Number(i)});load()}};
+$("m").onchange=render;
+$("pp").onchange=()=>{const p=PL.find(x=>x.i==$("pp").value);if(!p)return;$("ds").value=p.s;$("am").value=p.a;$("ty").value=p.t;$("ct").value=p.c};$("bf").onchange=render;$("q").oninput=render;
 $("tl").onchange=async e=>{const i=e.target.dataset.c;if(!i)return;const x=T.find(y=>y.i==i);if(x){x.c=e.target.value;await api("POST",x);load()}};
 $("ty").onchange=()=>{$("ct").value=$("ty").value==="e"?"Salário":"Mercado"};
 $("f").onsubmit=async e=>{e.preventDefault();
 await api("POST",{i:Date.now(),d:$("dt").value,s:$("ds").value.trim(),c:$("ct").value,b:$("bk").value,t:$("ty").value,a:parseFloat($("am").value)});
-$("m").value=$("dt").value.slice(0,7);$("ds").value="";$("am").value="";load()};
+$("m").value=$("dt").value.slice(0,7);$("ds").value="";$("am").value="";$("pp").value="";load()};
 /*P*/
 const RU=[[/supermerc|mercad|atacad|assa[ií]|carrefour|comper|tenda/i,"Mercado"],[/ifood|restaur|lanch|padaria|burger|pizza|mcdonald|sorvet|caf[eé]/i,"Alimentação"],[/uber|99 ?pop|99app|posto|combust|shell|ipiranga|estacion/i,"Transporte"],[/alugue|condom[ií]n|energisa|sanesul|vivo|claro|oi fibra|internet|enel/i,"Moradia"],[/netflix|spotify|cinema|steam|disney|prime|hbo|youtube|playstation/i,"Lazer"],[/farm[aá]c|drog|raia|pacheco|unimed|hospital|cl[ií]nica|laborat/i,"Saúde"],[/curso|udemy|alura|faculdade|unigran|mensalidade|livraria/i,"Estudos"],[/sal[aá]rio|folha de pag|proventos/i,"Salário"]];
 function cat(x){for(const[r,c]of RU)if(r.test(x.s)&&(c!=="Salário"||x.t==="e"))return c;return x.t==="e"?"Outros":"Compras Avulsas"}
@@ -278,7 +287,7 @@ const td=new Date(),cm=td.getFullYear()+"-"+String(td.getMonth()+1).padStart(2,"
 const L=PL.filter(p=>act(p,m)).sort((a,b)=>(a.day||99)-(b.day||99));
 let ps=0,rs=0,h="",t="";
 L.forEach(p=>{const kw=nz(p.kw||p.s);
-const mm=mt.filter(x=>x.t===p.t&&!used.has(x.i)&&nz(x.s).includes(kw));
+const mm=mt.filter(x=>x.t===p.t&&!used.has(x.i)&&(nz(x.s).includes(kw)||nz(x.s).includes(nz(p.s))));
 mm.forEach(x=>used.add(x.i));
 const real=mm.reduce((s,x)=>s+x.a,0),found=mm.length>0;let st,cl;
 if(!found){const late=m<cm||(m===cm&&p.day&&p.day<dn);st=late?"Não encontrado":"Pendente";cl=late?"neg":"yl"}
@@ -286,12 +295,19 @@ else if(p.t==="s"&&real>p.a*1.005){st="Acima +"+R(real-p.a);cl="neg"}
 else{st=p.t==="e"?"Recebido":"Pago";cl="pos"}
 if(p.t==="s"){ps+=p.a;rs+=real}
 t+=`<div class="pr"><div class="pn">${esc(p.s)}<small>${p.pt>1?"Parcela "+act(p,m)+"/"+p.pt:p.m?"Só este mês":"Fixo"}${p.day?" · dia "+p.day:""}</small></div><div class="pv">${R(p.a)}</div><div class="pv ${found?cl:""}">${found?R(real):"—"}</div><div class="ps ${cl}">${st}</div></div>`;
-h+=`<div class="tx"><div>${esc(p.s)}<small>${p.pt>1?"Parcela "+act(p,m)+"/"+p.pt+" · ":p.m?"":"Fixo · "}${p.day?"dia "+p.day+" · ":""}${esc(p.c)} · ${p.t==="e"?"previsto":"previsto"} ${R(p.a)}</small></div><div style="flex:none;text-align:right"><b class="${cl}">${found?R(real):"—"}</b><small>${st}</small></div>${p.pt>1?"":`<button class="x" data-f="${p.i}" title="${p.m?"Repetir todo mês":"Valer só neste mês"}">↻</button>`}<button class="x" data-p="${p.i}" title="Remover">✕</button></div>`});
+h+=`<div class="tx"><div><span class="nm">${esc(p.s)}</span><small>${p.pt>1?"Parcela "+act(p,m)+"/"+p.pt+" · ":p.m?"":"Fixo · "}${p.day?"dia "+p.day+" · ":""}${esc(p.c)} · ${p.t==="e"?"previsto":"previsto"} ${R(p.a)}</small></div><div style="flex:none;text-align:right"><b class="${cl}">${found?R(real):"—"}</b><small>${st}</small></div><button class="x" data-e="${p.i}" title="Renomear" aria-label="Renomear"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>${p.pt>1?"":`<button class="x" data-f="${p.i}" title="${p.m?"Repetir todo mês":"Valer só neste mês"}">↻</button>`}<button class="x" data-p="${p.i}" title="Remover">✕</button></div>`});
 const fora=mt.filter(x=>x.t==="s"&&!used.has(x.i)).reduce((s,x)=>s+x.a,0);
 $("pm").innerHTML=`<div><span class="l">Previsto (saídas)</span><b>${R(ps)}</b></div><div><span class="l">Realizado</span><b>${R(rs)}</b></div><div><span class="l">Fora do previsto</span><b class="${fora>0?"neg":""}">${R(fora)}</b></div>`;
-const hh=h||'<span class="sub">Nenhum previsto neste mês.</span>';$("pl").innerHTML=t?'<div class="pr h"><span class="l">Item</span><span class="l pv">Previsto</span><span class="l pv">Realizado</span><span class="l ps">Status</span></div>'+t:hh;$("pl2").innerHTML=hh}
+const hh=h||'<span class="sub">Nenhum previsto neste mês.</span>';$("pl").innerHTML=t?'<div class="pr h"><span class="l">Item</span><span class="l pv">Previsto</span><span class="l pv">Realizado</span><span class="l ps">Status</span></div>'+t:hh;$("pl2").innerHTML=hh;
+const cur=$("pp").value;$("pp").innerHTML='<option value="">Escolher um previsto (opcional)</option>'+PL.filter(p=>act(p,m)).map(p=>`<option value="${p.i}">${esc(p.s)} · ${R(p.a)}</option>`).join("");$("pp").value=cur;
+$("dl").innerHTML=[...new Set(PL.map(p=>p.s))].map(n=>`<option value="${esc(n)}">`).join("")}
 /*PE*/
-$("pl2").onclick=async e=>{const f=e.target.dataset.f,i=e.target.dataset.p;
+function editName(span,max,save){if(!span)return;const old=span.textContent,inp=document.createElement("input");inp.className="ed";inp.value=old;inp.maxLength=max;inp.setAttribute("aria-label","Novo nome");span.replaceWith(inp);inp.focus();inp.select();
+let done=false;const fin=async ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v&&v!==old)await save(v);else render()};
+inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();fin(true)}else if(e.key==="Escape")fin(false)};inp.onblur=()=>fin(true)}
+$("pl2").onclick=async e=>{
+const ed=e.target.closest("[data-e]");if(ed){const id=ed.dataset.e;editName(ed.closest(".tx").querySelector(".nm"),60,async v=>{const p=PL.find(y=>y.i==id);if(p){await api("POST",{...p,s:v},"plan");load()}else render()});return}
+const f=e.target.dataset.f,i=e.target.dataset.p;
 if(f){const p=PL.find(x=>x.i==f);if(p){await api("POST",{...p,m:p.m?"":$("m").value},"plan");load()}return}
 if(i&&confirm("Remover previsto?")){await api("DELETE",{i:Number(i)},"plan");load()}};
 $("pf").onsubmit=async e=>{e.preventDefault();

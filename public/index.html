@@ -91,7 +91,7 @@ svg{width:100%;height:auto;display:block}
 <select id="ct"></select><input id="dt" type="date" required>
 <select id="bk"></select><button>Adicionar</button></form></div>
 <div class="c"><h2>Importar extrato</h2><p class="sub" style="margin-bottom:10px">OFX ou CSV do C6, Itaú ou PicPay. Reimportar o mesmo arquivo não duplica.</p>
-<div class="fm"><select id="bi" title="Banco do extrato"></select><button id="imp" type="button">Escolher arquivo</button><input type="file" id="fl" accept=".ofx,.csv,.txt" hidden></div></div>
+<div class="fm"><select id="bi" title="Banco do extrato"></select><button id="imp" type="button">Escolher arquivo</button><input type="file" id="fl" accept=".ofx,.csv,.txt" hidden><button class="d" id="imp2" type="button">Importar planilha (.json)</button><input type="file" id="fj" accept=".json" hidden></div></div>
 </div>
 <div class="c"><h2>Novo previsto</h2>
 <form id="pf" class="fm"><input class="d" id="pn" placeholder="Nome (ex.: Aluguel)" required>
@@ -235,6 +235,16 @@ if(r.status===401){$("le").textContent="Senha incorreta";$("lp").value="";$("lp"
 if(!r.ok){$("le").textContent="Erro no servidor ("+r.status+")";return}
 P=pw;try{($("lr").checked?localStorage:sessionStorage).setItem("dp",pw)}catch(_){}
 await load()}catch(_){$("le").textContent="Sem conexão"}};
+$("imp2").onclick=()=>$("fj").click();
+$("fj").onchange=async e=>{const f=e.target.files[0];if(!f)return;let j;
+try{j=JSON.parse(await f.text())}catch(_){alert("Arquivo inválido");e.target.value="";return}
+const pl=j.plan||[],tx=j.tx||[];
+if(!pl.length&&!tx.length){alert("Arquivo sem dados");e.target.value="";return}
+try{
+if(pl.length&&confirm(pl.length+" previstos ("+(j.month||"mês")+"). Importar?"))await api("POST",{items:pl},"plan");
+if(tx.length&&confirm(tx.length+" lançamentos com os valores realizados da planilha. Importar também?"))await api("POST",{items:tx});
+}catch(_){e.target.value="";return}
+if(j.month)$("m").value=j.month;e.target.value="";load()};
 $("lb").onclick=()=>lock();
 load();
 </script></body></html>

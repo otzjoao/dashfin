@@ -148,7 +148,7 @@ button{cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:
 </div>
 </main>
 </div>
-<div id="lk" class="lk" role="dialog" aria-modal="true" aria-label="Acesso"><form id="lf" class="c"><h2>🔒 Acesso restrito</h2><input id="lp" type="password" placeholder="Senha" autocomplete="current-password" required><label class="ck"><input type="checkbox" id="lr" checked> Lembrar neste aparelho</label><p class="err" id="le" role="alert"></p><button>Entrar</button></form></div>
+<div id="lk" class="lk" role="dialog" aria-modal="true" aria-label="Acesso"><form id="lf" class="c"><h2>🔒 Acesso restrito</h2><input id="lp" type="password" name="password" placeholder="Senha" autocomplete="current-password" enterkeyhint="go" required><label class="ck"><input type="checkbox" id="lr" checked> Lembrar neste aparelho</label><p class="err" id="le" role="alert"></p><button>Entrar</button></form></div>
 <script>
 const CATS=["Mercado","Alimentação","Transporte","Moradia","Lazer","Saúde","Estudos","Compras Avulsas","Salário","Outros"];
 const COL=["#4ade80","#facc15","#60a5fa","#f472b6","#fb923c","#a78bfa","#2dd4bf","#f87171","#84cc16","#94a3b8"];
@@ -328,6 +328,7 @@ setTheme(TH.some(x=>x[0]===sv)?sv:(matchMedia("(prefers-color-scheme: light)").m
 function view(v){["dash","lanc"].forEach(k=>$(k).hidden=k!==v);document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));try{history.replaceState(null,"","#"+v)}catch(e){}}
 document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("[data-v]");if(b)view(b.dataset.v)};
 view(location.hash==="#lanc"?"lanc":"dash");
+$("lp").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const f=$("lf");typeof f.requestSubmit==="function"?f.requestSubmit():f.dispatchEvent(new Event("submit",{cancelable:true}))}});
 $("lf").onsubmit=async e=>{e.preventDefault();const pw=$("lp").value;if(!pw)return;$("le").textContent="";
 try{const r=await fetch("/api/tx",{headers:{"x-pass":pw}});
 if(r.status===401){DEMO=true;DB=decoy();P="";$("lp").value="";await load();return}
